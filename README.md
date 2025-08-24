@@ -10,9 +10,7 @@
 
 **HtmlAnalyse**：工具类，用于分析html内容，找到相应的swf路径
 
-**GameDownloader**：用于下载工作。
-
-它干两个活：主swf文件的寻找和下载；关联文件的下载。我们需要创建对象完成操作。
+**GameDownloader**：实例类，用于下载工作。
 
 变量setSwfpathVariable的设置是因为主界面有个“找到的SWF地址是：xxxxxx”信息框，我不得不把这个框的变量传递给它，方便即时修改
 
