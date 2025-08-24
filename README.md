@@ -10,7 +10,7 @@
 
 **HtmlAnalyse**：工具类，用于分析html内容，找到相应的swf路径
 
-**GameDownloader**：实例类，用于下载工作。它做两件事：寻找并下载主swf文件、下载关联swf文件
+**GameDownloader**：实例类，用于下载工作。它做两件事：寻找并下载主swf文件、下载关联文件
 - 变量setSwfpathVariable：主界面有个“找到的SWF地址是：xxxxxx”信息框，我不得不把这个框的变量传递给它，方便它修改
 - setInfo(url,appendix,site)：设置网络地址、文件名后缀、网站类型（'4399','7k7k','17yy'）（必须一次都设置好）
 - downloadSWF()：寻找下载swf文件，返回文件名。需要先setInfo
