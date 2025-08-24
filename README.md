@@ -4,13 +4,13 @@
 
 代码分为几个类：
 
-CONST：工具类，存放一些常数
+**CONST**：工具类，存放一些常数
 
-PHPTool：工具类，用于调用网站的php
+**PHPTool**：工具类，用于调用网站的php
 
-HtmlAnalyse：工具类，用于分析html内容，找到相应的swf路径
+**HtmlAnalyse**：工具类，用于分析html内容，找到相应的swf路径
 
-GameDownloader：用于下载工作。
+**GameDownloader**：用于下载工作。
 
 它干两个活：主swf文件的寻找和下载；关联文件的下载。我们需要创建对象完成操作。
 
@@ -20,5 +20,9 @@ GameDownloader：用于下载工作。
 
 (2) 关联文件的下载：用setSWFNetPath告诉它主swf文件的地址，用setHeader3再告诉它一次主swf文件的地址，填入请求头的Referer中，就可以使用relateDownload(XXX)下载了。
 
-Application、RelatedDownloader、EditNetPathDialog：三个类用于界面控件的显示和事件。
+**Application**：用于界面控件的显示和事件。
+
+**RelatedDownloader**：用于界面控件的显示和事件。
+
+**EditNetPathDialog**：用于界面控件的显示和事件。
 
