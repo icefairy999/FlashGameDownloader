@@ -114,9 +114,10 @@ class AutoDownloader:
 			result=0
 		if result==-1:
 			with self.lock:
-				self.textList.append(f"{self.textListNextCount}. [下载404]{pathResult}")
+				self.textList.append(f"{self.textListNextCount}. [下载404]{pathResult} (自动删掉)")
 				self.textListNextCount+=1
 				self.textListUpdated=True
+			os.remove(realLocalPath)
 		with self.statusLock:
 			self.loadingTaskNum-=1
 			if result==1: #成功
