@@ -4,4 +4,4 @@
 
 运行main.py即可
 
-python版本3.7以上
+python版本3.7以上，安装requests
