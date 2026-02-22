@@ -151,6 +151,9 @@ class RelatedDownloader:
 			self.enpdWindow.window.focus_force()
 
 	def btn_AutoDownloadStart(self):
+		if len(self.gd.relateDownloadSWFNetPath)==0:
+			messagebox.showinfo("提示","需要先填写swf在网上的路径")
+			return
 		self.adStatusProfix="下载中... "
 		self.ad.startAutoDownloading()
 		self.realUpdateAutoDownloadStatus(False)
