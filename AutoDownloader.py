@@ -48,7 +48,7 @@ class AutoDownloader:
 			self.failTaskNum=0
 			self.statusUpdated=True
 			self.lastDownloading=""
-			self.lastDownloadStatusOk=True
+			self.lastDownloadOk=True
 			self.downloadOk=True
 	
 	def DestoryProject(self):
