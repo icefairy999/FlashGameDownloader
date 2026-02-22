@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>小游戏加载中...</title>
+<link rel="icon" href="img/icon.png">
+<style>
+/************** 可配置颜色区域 **************/
+:root{
+  --bgclr1:#e6f1f3;
+  --bgclr2:#161616;
+  --bgclr3:#bccd72;
+  --bgclr4:#dcd1a0;
+
+  --fmclr1:#ffffff;
+  --fmclr2:#0e0e0e;
+  --fmclr3:#c8e389;
+  --fmclr4:#e6cda3;
+
+  --txtclr1:#000000;
+  --txtclr2:#CCCCCC;
+  --txtclr3:#000000;
+  --txtclr4:#000000;
+
+  --gmbgclr0:#000000;
+  --loadtxtclr0:#E6E6E6;
+
+  --bdclr1:#CCCCCC;
+  --bdclr2:#292929;
+  --bdclr3:#7f7f7f;
+  --bdclr4:#7f7f7f;
+  --bdclra0:#7F7F7F;
+}
+/*******************************************/
+
+html,body{margin:0;padding:0;width:100%;height:100%;}
+body{overflow-y:auto;overflow-x:auto;}
+
+#bgWrap{position:relative;height:700px;overflow:hidden;}
+#bgImg{position:absolute;left:50%;top:0;transform:translateX(-50%);height:700px;}
+
+/* pagePadding 将由 JS 固定宽度并居中 */
+#pagePadding{
+  height:240px;
+  /* width & centering will be set by JS using calculated width2 */
+}
+
+/* 保证 gameBox 内层有层级控制 */
+#frameOuter{
+  position:absolute;
+  top:50px;
+  box-sizing:border-box;
+}
+
+#topBar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+#topLeft{font-size:18px;}
+#topRight{display:flex;gap:9px;}
+
+.themeBtn{
+  width:20px;height:20px;
+  cursor:pointer;
+  border:1px solid var(--bdclra0);
+  box-sizing:border-box;
+}
+
+/* 关键：为 gameBox 增加相对定位，用于绝对定位 loader/nonexist */
+#gameBox{
+  margin:0 auto;
+  background:var(--gmbgclr0);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+
+/* loader 显式在最上层，显示/隐藏由 JS 控制 */
+#loader{
+  font-size:22px;
+  color:var(--loadtxtclr0);
+  position:absolute;
+  z-index:40;
+}
+
+/* nonexist 覆盖整个内框，非等比拉伸 (100% 100%) */
+#nonexist{
+  position:absolute;
+  inset:0;
+  background:url('img/nonexist.jpg') center center / 100% 100% no-repeat;
+  display:none;
+  z-index:30;
+}
+
+/* iframe 在 nonexist 之下 */
+iframe{
+  border:0;
+  overflow:hidden;
+  display:none;
+  position:relative;
+  z-index:10;
+}
+
+#bottomBar{height:105px;display:flex;align-items:center;justify-content:flex-start;padding-left:35px;gap:25px;}
+.btn{cursor:pointer;text-align:center;font-size:12px;user-select:none;display:flex;flex-direction:column;align-items:center;width:35px;height:60px;}
+.btn img{width:30px;height:30px;object-fit:contain;}
+.btn span{font-size:13.5px;margin-top:4px;}
+
+/* 全屏底部 50px 区域（默认隐藏，进入全屏时显示） */
+#fsBar {
+  position:fixed;
+  right:0;
+  bottom:0;
+  height:50px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-end;
+  padding-right:10px;
+  z-index:9999; /* 高于播放器 */
+  pointer-events:auto;
+  visibility:hidden;        /* 先隐藏，进入全屏时显示 */
+  user-select:none;
+}
+#fsBar button {
+  background:transparent;
+  border:0;
+  color:inherit;
+  cursor:pointer;
+  padding:0 6px;
+  font-size:16px;
+  height:10px;
+}
+#fsBackdrop{
+    display:none;
+    position:fixed;
+    left:0;
+    top:0;
+    right:0;
+    bottom:0;
+    z-index:9997;
+    pointer-events:none;
+}
+
+</style>
+</head>
+<body>
+<div id="bgWrap"><img id="bgImg" draggable="false"></div>
+<div id="frameOuter">
+  <div id="topBar">
+    <div id="topLeft"></div>
+    <div id="topRight"></div>
+  </div>
+  <div id="gameBox">
+    <div id="loader">准备中</div>
+    <div id="nonexist"></div>
+    <iframe id="gameFrame" scrolling="no"></iframe>
+  </div>
+  <div id="bottomBar">
+    <div class="btn" id="btnReplay"><img src="img/btn_replay.png" draggable="false"><span>重玩</span></div>
+    <div class="btn" id="btnzoom1"><img src="img/btn_zoom1.png" draggable="false"><span>放大</span></div>
+    <div class="btn" id="btnzoom2"><img src="img/btn_zoom2.png" draggable="false"><span>缩小</span></div>
+    <div class="btn" id="btnFullscreen"><img src="img/btn_fullscreen.png" draggable="false"><span>全屏</span></div>
+  </div>
+</div>
+
+<div id="pagePadding"></div>
+
+<!-- 全屏时显示的最下方 50px 区域 -->
+<div id="fsBar" aria-hidden="true">
+  <button id="fsReplay">重玩</button>
+  <button id="fsExit">退出全屏</button>
+</div>
+
+<div id="fsBackdrop"></div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const game=params.get('game');
+let width=parseInt(params.get('width'))||800;
+let height=parseInt(params.get('height'))||600;
+let name='未知';
+if(game&&game.trim()){
+  const m=game.match(/^(.*)_[a-z][0-9]+$/);
+  name=m?m[1]:game;
+}
+document.title=name+'小游戏,本地游玩中';
+document.getElementById('topLeft').textContent=name+'小游戏';
+
+const THEMES=[
+  {bg:'img/bg1.jpg',bgclr:'var(--bgclr1)',fm:'var(--fmclr1)',txt:'var(--txtclr1)',border:'var(--bdclr1)',btn:1},
+  {bg:'img/bg2.jpg',bgclr:'var(--bgclr2)',fm:'var(--fmclr2)',txt:'var(--txtclr2)',border:'var(--bdclr2)',btn:2},
+  {bg:'img/bg3.jpg',bgclr:'var(--bgclr3)',fm:'var(--fmclr3)',txt:'var(--txtclr3)',border:'var(--bdclr3)',btn:3},
+  {bg:'img/bg4.jpg',bgclr:'var(--bgclr4)',fm:'var(--fmclr4)',txt:'var(--txtclr4)',border:'var(--bdclr4)',btn:4}
+];
+let theme=parseInt(localStorage.getItem('frame_theme'))||0;
+
+const outer=document.getElementById('frameOuter');
+const gameBox=document.getElementById('gameBox');
+const iframe=document.getElementById('gameFrame');
+const loader=document.getElementById('loader');
+const bgImg=document.getElementById('bgImg');
+const nonexist=document.getElementById('nonexist');
+const pagePadding=document.getElementById('pagePadding');
+const bgWrap=document.getElementById('bgWrap');
+
+function applyTheme(){
+  const t=THEMES[theme];
+  bgImg.style.visibility='hidden';
+  bgImg.onload=()=>bgImg.style.visibility='visible';
+  bgImg.onerror=()=>bgImg.style.visibility='visible';
+  bgImg.src=t.bg;
+  document.body.style.backgroundColor=t.bgclr;
+  outer.style.background=t.fm;
+  outer.style.color=t.txt;
+  outer.style.border=`1px solid ${t.border}`;
+  localStorage.setItem('frame_theme',theme);
+}
+
+function layout(){
+  // 保持原来的居中算法
+  const width2=width+110;
+  const height2=height+177;
+  bgWrap.style.width=Math.max(document.documentElement.clientWidth,width2+10)+'px'
+  outer.style.left=Math.max(5,(document.documentElement.clientWidth-width2)/2)+'px';
+  outer.style.width=width2+'px';
+  outer.style.height=height2+'px';
+  gameBox.style.width=width+'px';
+  gameBox.style.height=height+'px';
+  iframe.width=width;
+  iframe.height=height;
+  // pagePadding 固定宽度并居中（不会在不需要滚动时撑出额外像素）
+  pagePadding.style.width = (width2 + 10) + 'px';
+  pagePadding.style.margin = '0 auto';
+}
+window.addEventListener('resize',layout);
+
+// loader 动画 - 使用可清除的 timer
+let dots=0;
+let loaderTimer = setInterval(()=>{
+  dots=(dots%6)+1;
+  loader.textContent='准备中'+'.'.repeat(dots);
+},300);
+
+function stopLoader(){
+  if(loaderTimer){ clearInterval(loaderTimer); loaderTimer = null; }
+}
+
+/************** 二次加载 + 彩蛋 + 层级处理 **************/
+if(!game){
+  stopLoader();
+  loader.style.display = 'block';
+  loader.textContent='你打开了这个网页，这表明你是个勇士。但这个网页只是框架，要输入参数才能运行游戏呢。';
+  nonexist.style.display='none';
+}else{
+  const path=`FlashDownloads/${game}h/${game}.htm`;
+  fetch(path,{method:'HEAD'}).then(r=>{
+    if(!r.ok) throw 0;
+    // 存在 -> 停止准备动画并加载 iframe
+    stopLoader();
+    loader.style.display='none';
+    nonexist.style.display='none';
+    loader.textContent='加载中';
+    iframe.src=path;
+    iframe.style.display='block';
+    // iframe.onload 额外保险：确保 loader 隐藏
+    iframe.onload = ()=> {
+		//已加载完毕
+		loader.style.display='none';
+		nonexist.style.display='none';
+	};
+  }).catch(()=>{
+    // 不存在 -> 停止动画，显示 nonexist 图片（拉伸填满内框）
+    stopLoader();
+    loader.style.display='none';
+    nonexist.style.display='block';
+    // 隐藏 iframe just-in-case
+    iframe.style.display='none';
+  });
+}
+
+// 按钮动作（保留）
+function replayIframe(){
+  try{
+    iframe.contentWindow.location.reload();
+  }catch(e){
+  }
+}
+
+document.getElementById('btnReplay').onclick=replayIframe
+document.getElementById('btnFullscreen').onclick=enterInnerFullscreen
+document.getElementById('btnzoom1').onclick=(()=>{
+  width*=(4/3);
+  height*=(4/3);
+  layout();
+})
+document.getElementById('btnzoom2').onclick=(()=>{
+  width*=0.75;
+  height*=0.75;
+  layout();
+})
+
+// 主题按钮生成
+const topRight=document.getElementById('topRight');
+THEMES.forEach((t,i)=>{
+  const d=document.createElement('div');
+  d.className='themeBtn';
+  d.style.background=t.fm;
+  d.onclick=()=>{ theme=i; applyTheme(); };
+  topRight.appendChild(d);
+});
+
+applyTheme();
+layout();
+
+
+// 全屏逻辑--------------------------------------------------
+let isInnerFullscreen = false;
+let iframePrevStyles = {}; // 保存 iframe 原始样式以便恢复
+
+function enterInnerFullscreen() {
+  if (isInnerFullscreen) return;
+  isInnerFullscreen = true;
+
+  // 保存当前 iframe 有关样式，以便恢复
+  iframePrevStyles = {
+    position: iframe.style.position || '',
+    left: iframe.style.left || '',
+    top: iframe.style.top || '',
+    width: iframe.style.width || '',
+    height: iframe.style.height || '',
+    zIndex: iframe.style.zIndex || '',
+    display: iframe.style.display || ''
+  };
+
+  // 2) 隐藏页面滚动（禁止滚动）
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  // 3) 把 iframe 置为 fixed，全屏显示（底部留 50px）
+  iframe.style.position = 'fixed';
+  iframe.style.left = '0';
+  iframe.style.top = '0';
+  iframe.style.zIndex = 9998; // 低于 fsBar（fsBar z-index 比它高）
+  // 使用 clientWidth/clientHeight 以避免滚动条差异
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  iframe.style.width = vw + 'px';
+  iframe.style.height = Math.max(0, vh - 50) + 'px';
+  iframe.style.display = 'block';
+
+  // 4) 显示 fsBar（底部 50px 的控制区），并设置其颜色/文字色
+  const fsBar = document.getElementById('fsBar');
+  fsBar.style.visibility = 'visible';
+
+  // 5) 告知 iframe 子页设置透明背景
+  setIframeBackgroundForFullscreen(true);
+
+  // 6) 响应 resize：调整 iframe 大小
+  window.addEventListener('resize', innerFsResizeHandler);
+
+  // 7)背景
+  const fb = document.getElementById('fsBackdrop');
+  const t = THEMES[theme];
+  fb.style.background = t.fm;
+  fb.style.display = 'block';
+}
+
+function exitInnerFullscreen() {
+  if (!isInnerFullscreen) return;
+  isInnerFullscreen = false;
+
+  // 恢复页面滚动与背景（你可以保存原来值或直接清空）
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+
+  // 恢复 iframe 原始样式
+  iframe.style.position = iframePrevStyles.position;
+  iframe.style.left = iframePrevStyles.left;
+  iframe.style.top = iframePrevStyles.top;
+  iframe.style.width = iframePrevStyles.width;
+  iframe.style.height = iframePrevStyles.height;
+  iframe.style.zIndex = iframePrevStyles.zIndex;
+  iframe.style.display = iframePrevStyles.display;
+
+  // 隐藏 fsBar
+  const fsBar = document.getElementById('fsBar');
+  fsBar.style.visibility = 'hidden';
+
+  // 告知子页面恢复背景
+  setIframeBackgroundForFullscreen(false); //注：这个可做可不做
+
+  // 移除 resize handler
+  window.removeEventListener('resize', innerFsResizeHandler);
+
+  //移除大背景
+  const fb = document.getElementById('fsBackdrop');
+  fb.style.display = 'none';
+}
+
+function innerFsResizeHandler() {
+  if (!isInnerFullscreen) return;
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  iframe.style.width = vw + 'px';
+  iframe.style.height = Math.max(0, vh - 50) + 'px';
+}
+
+iframe.addEventListener('load', ()=>{
+  if (isInnerFullscreen) setIframeBackgroundForFullscreen(true);
+});
+
+document.getElementById('fsReplay').onclick=replayIframe
+document.getElementById('fsExit').onclick=exitInnerFullscreen
+
+function setIframeBackgroundForFullscreen(value) {
+  if (!value) return; // value=false 时不做任何事
+  // 必须有 iframe 对象
+  if (!iframe) return;
+  //这是将接下来的页面设为透明的代码，但我发现4399它们早有预见，根本不需要这段代码，就是透明的。因此我什么都不用写
+  return
+}
+
+//------------------------------------------------------------
+
+
+</script>
+</body>
+</html>
