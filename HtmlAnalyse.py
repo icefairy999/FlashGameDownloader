@@ -339,7 +339,7 @@ class HtmlAnalyse:
 		# 绝对禁止..
 		if '..' in fileName:
 			return ""
-		forbidden_chars = set('#[]@!$&\'()*+,;=\"<> |:`')
+		forbidden_chars = set('@\'*\"<>|:')
 		for ch in rtn:
 			if ch in forbidden_chars:
 				return ""
