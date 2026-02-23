@@ -10,5 +10,4 @@ python版本3.7以上，安装requests
 
 ```bash
 pyinstaller --name="MiniGameDownloader" --onefile --windowed --icon="1.ico" main.py
-pyinstaller --name="DownloadTool" --onefile main2.py
 ```
