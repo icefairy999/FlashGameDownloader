@@ -108,6 +108,15 @@ class EditNetPathDialog:
 		self.reset_btn.grid(row=0, column=2, padx=10)
 
 		self.window.columnconfigure(0, weight=1)
+		self.window.bind("<Map>", self.on_map)
+		self.window.bind("<FocusIn>", self.on_focus)
+	def on_map(self,event):
+		if self.parent.state() in ('iconic', 'withdrawn'):
+			self.parent.deiconify()
+	def on_focus(self, event):
+		if self.window.state() in ('iconic', 'withdrawn'):
+			self.window.deiconify()
+
 	def on_selection_changed(self):
 		self.changeNewPageRadioBtn()
 	def btn_reset(self):

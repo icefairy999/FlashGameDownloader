@@ -324,6 +324,7 @@ class GameDownloader:
 		return result
 
 	def relateDownload(self,path,msgboxError=True):
+		#已经历过一遍getBatchDownloadValidName
 		#请把setSWFNetPath和localFolder设置好先
 		#返回:1成功，0失败，-1为404
 		realNetPath=HtmlAnalyse.BatchDownloadJoinNetPath(self.relateDownloadFolderNetPath, path)
@@ -334,7 +335,14 @@ class GameDownloader:
 			else:
 				raise Exception(errText)
 			return 0
-		realLocalPath=os.path.join(self.localFolder,path)
+		realLocalPath=HtmlAnalyse.BatchDownloadJoinLocalPath(self.localFolder,path)
+		if realLocalPath=="":
+			errText=f"下载 {path} 失败: 路径经不规范（含..、特殊字符、空格）且之前未被查出"
+			if msgboxError:
+				messagebox.showerror("错误", errText)
+			else:
+				raise Exception(errText)
+			return 0
 		try:
 			response = requests.get(realNetPath, headers=self.header3, timeout=(3,10))
 			lastFolder=os.path.dirname(realLocalPath)

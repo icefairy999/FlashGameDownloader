@@ -4,7 +4,7 @@
 import socket
 import threading
 import atexit
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 import functools
 
 class PortServer:
@@ -44,7 +44,7 @@ class PortServer:
 					on_request_start=real_request_start,
 					on_request_end=real_request_end
 					)
-		self.server = HTTPServer(('localhost', self.port), handler)
+		self.server = ThreadingHTTPServer(('localhost', self.port), handler)
 		# 启动服务器
 		self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 		self.thread.start()

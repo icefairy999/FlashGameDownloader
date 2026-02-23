@@ -106,15 +106,10 @@ class Application:
 		self.game_list.bind('<Double-Button-1>', self.on_doubleClick)
 		self.game_list.bind('<<ListboxSelect>>', self.on_selectionUpdate)
 		#防止失去焦点
-		self.root.bind("<Map>", self.on_map)
 		self.root.bind("<FocusIn>", self.on_focus)
-	def on_map(self, event):
-		if self.rdWindow and self.rdWindow.window.winfo_exists():
-			self.rdWindow.window.grab_set()
-			self.rdWindow.window.focus_force()
 	def on_focus(self, event):
-		if self.rdWindow and self.rdWindow.window.winfo_exists():
-			self.rdWindow.window.focus_force()
+		if self.root.state() in ('iconic', 'withdrawn'):
+			self.root.deiconify()
 
 	def btn_downloadAndPlay(self):
 		threading.Thread(target=self.thread_downloadPlayGame, daemon=True).start()

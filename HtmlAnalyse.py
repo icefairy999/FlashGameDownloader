@@ -1,7 +1,7 @@
 #用于各种文本处理
 import os.path
 import re
-from urllib.parse import urljoin,urlparse
+from urllib.parse import urljoin,urlparse,quote,unquote
 from pathlib import Path
 
 class HtmlAnalyse:
@@ -339,7 +339,7 @@ class HtmlAnalyse:
 		# 绝对禁止..
 		if '..' in fileName:
 			return ""
-		forbidden_chars = set('@\'*\"<>|:')
+		forbidden_chars = set('#[]@!$&\'()*+,;=\"<> |:`')
 		for ch in rtn:
 			if ch in forbidden_chars:
 				return ""
@@ -377,6 +377,21 @@ class HtmlAnalyse:
 		if path2[-1]=='/':
 			path2=path2[:-1] #这个操作比较离谱，但我无法分清网站的主页是index.htm还是index.html，所以干脆不分了，拜拜
 		return base+path2
+	
+	@staticmethod
+	def BatchDownloadJoinLocalPath(localFolder,path):
+		try:
+			path2=unquote(path)
+		except Exception:
+			return ""
+		# 绝对禁止..
+		if '..' in path2:
+			return ""
+		forbidden_chars = set('?*\"<>|:')
+		for ch in path2:
+			if ch in forbidden_chars:
+				return ""
+		return os.path.join(localFolder,path2)
 
 	@staticmethod
 	def decodeWebContent(content):
@@ -411,3 +426,4 @@ class HtmlAnalyse:
 	def Page7k7k17yyReplace(text):
 		text2=re.sub(r"document.domain\s*=\s*['\"](7k7k|17yy).com['\"]\s*[,;]","",text)
 		return text2
+	

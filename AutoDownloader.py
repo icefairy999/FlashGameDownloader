@@ -30,6 +30,7 @@ class AutoDownloader:
 
 		self.lock=threading.Lock()
 		self.statusLock=threading.Lock()
+		self.downListLock=threading.Lock()
 		self.gd=gd
 
 		Global.portServer.on_request_start=self.on_request_start
@@ -39,7 +40,8 @@ class AutoDownloader:
 	def InitNewProject(self, localRelaBase, gameRelaName):
 		self.localRelaBase=localRelaBase
 		self.gameRelaName=gameRelaName
-		self.downloadedList.clear()
+		with self.downListLock:
+			self.downloadedList.clear()
 		with self.statusLock:
 			self.totalTaskNum=0
 			self.loadingTaskNum=0
@@ -88,12 +90,18 @@ class AutoDownloader:
 		#绝对路径
 		realLocalPath=os.path.join(self.gd.localFolder, pathResult)
 		#看看是不是已下载过
-		if pathResult in self.downloadedList:
-			return
+		with self.downListLock:
+			if pathResult in self.downloadedList:
+				return
 		#看看是不是已存在
 		if os.path.exists(realLocalPath):
 			return
 		#下载
+		with self.downListLock:
+			if pathResult in self.downloadedList:
+				return
+			self.downloadedList.append(pathResult)
+			#添加进下载列表先，下载失败再说
 		#直接下载，绝对不要用线程，线程下载速度跟不上，网页直接加载失败，还要刷新，得不偿失
 		with self.statusLock:
 			if not self.isAutoDownloading:
@@ -127,10 +135,15 @@ class AutoDownloader:
 			elif result==-1: #404
 				self.notFoundTaskNum+=1
 			self.statusUpdated=True
-			self.downloadOk=True
+			if self.loadingTaskNum==0:
+				self.downloadOk=True
 			self.lastDownloadOk=True
-		if result!=0:
-			self.downloadedList.append(pathResult)
+		if result==0:
+			with self.downListLock:
+				try:
+					self.downloadedList.remove(pathResult)
+				except Exception:
+					pass
 
 	def on_request_end(self,client_addr, command, path, code):
 		if not self.isWorking:

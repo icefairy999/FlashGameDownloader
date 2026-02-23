@@ -142,13 +142,12 @@ class RelatedDownloader:
 		# 防止失去焦点
 		self.window.bind("<Map>", self.on_map)
 		self.window.bind("<FocusIn>", self.on_focus)
-	def on_map(self, event):
-		if self.enpdWindow and self.enpdWindow.window.winfo_exists():
-			self.enpdWindow.window.grab_set()
-			self.enpdWindow.window.focus_force()
+	def on_map(self,event):
+		if self.parent.state() in ('iconic', 'withdrawn'):
+			self.parent.deiconify()
 	def on_focus(self, event):
-		if self.enpdWindow and self.enpdWindow.window.winfo_exists():
-			self.enpdWindow.window.focus_force()
+		if self.window.state() in ('iconic', 'withdrawn'):
+			self.window.deiconify()
 
 	def btn_AutoDownloadStart(self):
 		if len(self.gd.relateDownloadSWFNetPath)==0:
