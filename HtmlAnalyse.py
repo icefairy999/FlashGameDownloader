@@ -384,13 +384,8 @@ class HtmlAnalyse:
 			path2=unquote(path)
 		except Exception:
 			return ""
-		# 绝对禁止..
-		if '..' in path2:
+		if not HtmlAnalyse.isGoodFileName(path2):
 			return ""
-		forbidden_chars = set('?*\"<>|:')
-		for ch in path2:
-			if ch in forbidden_chars:
-				return ""
 		return os.path.join(localFolder,path2)
 
 	@staticmethod
@@ -427,3 +422,12 @@ class HtmlAnalyse:
 		text2=re.sub(r"document.domain\s*=\s*['\"](7k7k|17yy).com['\"]\s*[,;]","",text)
 		return text2
 	
+	@staticmethod
+	def isGoodFileName(name):
+		if '..' in name:
+			return False  #绝对禁止..
+		forbidden_chars = set('?*\"<>|:')
+		for ch in name:
+			if ch in forbidden_chars:
+				return False
+		return True

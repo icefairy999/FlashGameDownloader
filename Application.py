@@ -10,6 +10,7 @@ from Common import *
 from FlashRunner import *
 from RelatedDownloader import *
 from AutoDownloader import *
+from ToolDownloader import *
 
 class Application:
 	def __init__(self, root):
@@ -19,6 +20,7 @@ class Application:
 		self.gd=GameDownloader()
 		self.ad=AutoDownloader(self.gd)
 		self.rdWindow=None
+		self.tdWindow=None
 		if not os.path.isdir(Global.downloadDir):
 			os.makedirs(Global.downloadDir) # 创建下载目录
 		self.setupUI() # 绘制ui
@@ -63,15 +65,17 @@ class Application:
 
 		# 按钮区域2
 		button_frame2 = ttk.Frame(self.root, padding="10")
-		button_frame2.grid(row=3, column=0, sticky=tk.W)
+		button_frame2.grid(row=3, column=0, sticky=(tk.W,tk.E))
 		self.delete_btn=ttk.Button(button_frame2, text="删除", command=self.btn_deleteGame)
 		self.delete_btn.grid(row=0, column=0, padx=5)
 		self.deleteAll_btn=ttk.Button(button_frame2, text="全部删除", command=self.btn_deleteAllGames)
 		self.deleteAll_btn.grid(row=0, column=1, padx=5)
 		self.refresh_btn=ttk.Button(button_frame2, text="刷新列表", command=self.btn_refreshGameList)
 		self.refresh_btn.grid(row=0, column=2, padx=5)
+		self.tooldownload_btn=ttk.Button(button_frame2, text="自由下载工具", command=self.btn_tooldownload)
+		self.tooldownload_btn.grid(row=0, column=4, padx=5)
 		self.swfToHtm_btn=ttk.Button(button_frame2, text="改为htm打开", command=self.btn_swfToHtm)
-		self.swfToHtm_btn.grid(row=0, column=4, padx=(5,30))
+		self.swfToHtm_btn.grid(row=0, column=5, padx=(5,30))
 		button_frame2.columnconfigure(3,weight=1)
 
 		# 状态栏1
@@ -111,6 +115,9 @@ class Application:
 		if self.root.state() in ('iconic', 'withdrawn'):
 			self.root.deiconify()
 
+	def btn_tooldownload(self):
+		self.tdWindow=ToolDownloader(self.root)
+		self.tdWindow=None
 	def btn_downloadAndPlay(self):
 		threading.Thread(target=self.thread_downloadPlayGame, daemon=True).start()
 	def btn_downloadGame(self):
