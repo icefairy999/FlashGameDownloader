@@ -54,6 +54,11 @@ window.h5api = {
 	playYlhAd: function (placementId, callback) {
 		//我不知他在搞什么
 		console.warn("试图调用api: playYlhAd");
+		console.log("调用api: playYlhAd, placementId:", placementId);
+		if (callback) {
+			callback({code: 10000, message: "开始播放"});
+			callback({code: 10001, message: "播放结束"});
+		}
 	},
 	/**
 	 * 播放插屏广告
